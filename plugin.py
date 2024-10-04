@@ -1,5 +1,5 @@
 """
-<plugin key="aircon_status" name="AirCon Status Plugin" version="1.1" author="YourName"
+<plugin key="aircon_status" name="Hisense - AirCon Plugin" version="0.1" author="BBlaszkiewicz"
     type="hardware" 
     description="Plugin do odczytu i sterowania klimatyzatorem Hisense">
     
@@ -13,10 +13,10 @@
         </param>
         
         <!-- Parametr Mode2 dla ustawienia adresu serwera klimatyzatora (opcjonalne) -->
-        <param field="Mode2" label="Serwer klimatyzatora (IP)" width="200px" required="true" default="localhost" />
+        <param field="Mode2" label="AirCon server address" width="200px" required="true" default="localhost" />
         
         <!-- Parametr Mode3 dla interwału odświeżania -->
-        <param field="Mode3" label="Interwał odświeżania (minuty)" width="75px" required="true" default="5" />
+        <param field="Mode3" label="Refresh interval (minutes)" width="75px" required="true" default="5" />
     </params>
 </plugin>
 
@@ -35,15 +35,15 @@ class BasePlugin:
     def __init__(self):
         self.api_url = 'http://localhost:8888/hisense/status'
         self.command_url = 'http://localhost:8888/hisense/command'
-        self.pollinterval = 300  # Domyślny interwał odświeżania (sekundy)
-        self.nextpoll = datetime.datetime.now()  # Czas następnego odświeżenia
+        self.pollinterval = 300  
+        self.nextpoll = datetime.datetime.now()  
 
     def onStart(self):
         Domoticz.Log("AirCon Status Plugin Started")
 
         # Pobierz wartość interwału z parametru Mode3 (jeśli ustawiony)
         if "Mode3" in Parameters:
-            self.pollinterval = int(Parameters["Mode3"]) * 60  # Konwersja minut na sekundy
+            self.pollinterval = int(Parameters["Mode3"]) * 60  
             Domoticz.Log(f"Polling interval set to {self.pollinterval // 60} minutes")
 
         # Tworzenie urządzeń w Domoticz dla sterowania
@@ -56,14 +56,12 @@ class BasePlugin:
         if 4 not in Devices:
             Domoticz.Device(Name="Set Temperature", Unit=4, Type=242, Subtype=1).Create()  # Selector for set temperature
 
-        # Poczekaj na uruchomienie serwera
         self.wait_for_server()
 
     def onStop(self):
         Domoticz.Log("AirCon Status Plugin Stopped")
 
     def onHeartbeat(self):
-        # Sprawdzanie, czy minął czas na odświeżenie
         now = datetime.datetime.now()
         if now < self.nextpoll:
             Domoticz.Debug(f"Awaiting next poll: {self.nextpoll}")
@@ -74,7 +72,6 @@ class BasePlugin:
         if response:
             self.update_devices(response)
 
-        # Ustaw kolejny czas odświeżenia
         self.postponeNextPool(self.pollinterval)
 
     def onCommand(self, Unit, Command, Level, Color):
@@ -172,7 +169,6 @@ class BasePlugin:
             if power is not None and 2 in Devices:
                 nVal = 1 if power == "ON" else 0
                 sVal = "On" if power == "ON" else "Off"
-                #Devices[2].Update(nValue=nValue, sValue=str(power))
                 Devices[2].Update(nValue=nVal, sValue=sVal)
                 Domoticz.Log(f"Updated power state: {power} nvalue: {nVal}")
 
